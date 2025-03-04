@@ -273,4 +273,4 @@ edf2 = pd.DataFrame(e2)
 RMSFE2 = np.sqrt(edf2.apply(np.square).mean())
 print(RMSFE2)
 
-### with such 2 covariates, forecast is worse comparing RMSFE !!
+### with such 2 covariates, forecast is worse comparing RMSFE !
