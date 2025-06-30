@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>assignment4</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="Assignment4_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Assignment4_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="Assignment4_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="Assignment4_files/libs/quarto-html/popper.min.js"></script>
+<script src="Assignment4_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Assignment4_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Assignment4_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Assignment4_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Assignment4_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Assignment4_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Assignment4_files/libs/bootstrap/bootstrap-bb462d781dde1847d9e3ccf7736099dd.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="given-code-edit-start-at-line-250" class="level3">
+<h3 class="anchored" data-anchor-id="given-code-edit-start-at-line-250">Given code (Edit start at line 250)</h3>
+<p>import numpy as np import pandas as pd import matplotlib.pyplot as plt import seaborn as sns from sklearn.model_selection import train_test_split from sklearn.linear_model import Lasso, Ridge, LinearRegression, LassoCV from sklearn.preprocessing import StandardScaler from sklearn.metrics import mean_squared_error, r2_score from sklearn.model_selection import cross_val_score import warnings warnings.filterwarnings(‘ignore’)</p>
+<p>np.random.seed(42)</p>
+<p>plt.rcParams[‘figure.figsize’] = (10, 6)</p>
+<p>n_samples = 200<br>
+n_features = 50<br>
+n_informative = 10<br>
+noise_level = 1.0</p>
+<p>X = np.random.randn(n_samples, n_features) true_coefficients = np.zeros(n_features) informative_features = np.random.choice(n_features, n_informative, replace=False) print(f”True informative features indices: {sorted(informative_features)}“)</p>
+<p>for idx in informative_features: true_coefficients[idx] = np.random.randn() * 3</p>
+<pre><code>Y = X @ true_coefficients + np.random.randn(n_samples) * noise_level
+data_dict = {
+'X': X,
+'Y': Y,
+'true_coefficients': true_coefficients,
+'informative_features': informative_features</code></pre>
+<p>}</p>
+<p>coef_df = pd.DataFrame({ ‘feature_index’: range(n_features), ‘true_coefficient’: true_coefficients })</p>
+<p>print(“-zero coefficients:”) print(coef_df[coef_df[‘true_coefficient’] != 0])</p>
+<p>X_train, X_test, Y_train, Y_test = train_test_split( X, Y, test_size=0.3, random_state=42 )</p>
+<p>print(f”Training set size: {X_train.shape}“) print(f”Test set size: {X_test.shape}“)</p>
+<p>scaler = StandardScaler() X_train_scaled = scaler.fit_transform(X_train) X_test_scaled = scaler.transform(X_test)</p>
+<p>alphas = [0.0001, 0.001, 0.01, 0.1, 0.5, 1.0]</p>
+<p>lasso_results = {}</p>
+<p>for alpha in alphas: lasso = Lasso(alpha=alpha, max_iter=10000) lasso.fit(X_train_scaled, Y_train)</p>
+<pre><code>Y_train_pred = lasso.predict(X_train_scaled)
+Y_test_pred = lasso.predict(X_test_scaled)
+
+train_mse = mean_squared_error(Y_train, Y_train_pred)
+test_mse = mean_squared_error(Y_test, Y_test_pred)
+train_r2 = r2_score(Y_train, Y_train_pred)
+test_r2 = r2_score(Y_test, Y_test_pred)
+
+n_nonzero = np.sum(lasso.coef_ != 0)
+
+lasso_results[alpha] = {
+    'model': lasso,
+    'coefficients': lasso.coef_,
+    'train_mse': train_mse,
+    'test_mse': test_mse,
+    'train_r2': train_r2,
+    'test_r2': test_r2,
+    'n_nonzero_coef': n_nonzero
+}
+
+print(f"\nAlpha = {alpha}")
+print(f"  Non-zero coefficients: {n_nonzero}")
+print(f"  Train MSE: {train_mse:.4f}, Test MSE: {test_mse:.4f}")
+print(f"  Train R²: {train_r2:.4f}, Test R²: {test_r2:.4f}")</code></pre>
+<p>ridge_results = {}</p>
+<p>for alpha in alphas: ridge = Ridge(alpha=alpha) ridge.fit(X_train_scaled, Y_train)</p>
+<pre><code>Y_train_pred = ridge.predict(X_train_scaled)
+Y_test_pred = ridge.predict(X_test_scaled)
+
+train_mse = mean_squared_error(Y_train, Y_train_pred)
+test_mse = mean_squared_error(Y_test, Y_test_pred)
+train_r2 = r2_score(Y_train, Y_train_pred)
+test_r2 = r2_score(Y_test, Y_test_pred)
+
+threshold = 0.001
+n_small = np.sum(np.abs(ridge.coef_) &lt; threshold)
+
+ridge_results[alpha] = {
+    'model': ridge,
+    'coefficients': ridge.coef_,
+    'train_mse': train_mse,
+    'test_mse': test_mse,
+    'train_r2': train_r2,
+    'test_r2': test_r2,
+    'n_small_coef': n_small
+}
+
+print(f"\nAlpha = {alpha}")
+print(f"  Coefficients &lt; {threshold}: {n_small}")
+print(f"  Train MSE: {train_mse:.4f}, Test MSE: {test_mse:.4f}")
+print(f"  Train R²: {train_r2:.4f}, Test R²: {test_r2:.4f}")</code></pre>
+<p>selected_alpha = 0.1</p>
+<p>lasso_coef = lasso_results[selected_alpha][‘coefficients’] ridge_coef = ridge_results[selected_alpha][‘coefficients’]</p>
+<p>fig, axes = plt.subplots(2, 2, figsize=(15, 12))</p>
+<p>ax1 = axes[0, 0] ax1.scatter(true_coefficients, lasso_coef, alpha=0.6) ax1.plot([-5, 5], [-5, 5], ‘r–’, label=‘Perfect recovery’) ax1.set_xlabel(‘True Coefficients’) ax1.set_ylabel(‘Lasso Coefficients’) ax1.set_title(f’Lasso Coefficient Recovery (α={selected_alpha})’) ax1.legend() ax1.grid(True, alpha=0.3)</p>
+<p>ax2 = axes[0, 1] ax2.scatter(true_coefficients, ridge_coef, alpha=0.6) ax2.plot([-5, 5], [-5, 5], ‘r–’, label=‘Perfect recovery’) ax2.set_xlabel(‘True Coefficients’) ax2.set_ylabel(‘Ridge Coefficients’) ax2.set_title(f’Ridge Coefficient Recovery (α={selected_alpha})’) ax2.legend() ax2.grid(True, alpha=0.3)</p>
+<p>ax3 = axes[1, 0] for idx in informative_features: coef_path = [lasso_results[alpha][‘coefficients’][idx] for alpha in alphas] ax3.plot(alphas, coef_path, ‘b-’, linewidth=2, alpha=0.8)</p>
+<p>for idx in range(n_features): if idx not in informative_features: coef_path = [lasso_results[alpha][‘coefficients’][idx] for alpha in alphas] ax3.plot(alphas, coef_path, ‘gray’, linewidth=0.5, alpha=0.3) ax3.set_xscale(‘log’) ax3.set_xlabel(‘Alpha (log scale)’) ax3.set_ylabel(‘Coefficient Value’) ax3.set_title(‘Lasso Coefficient Path’) ax3.grid(True, alpha=0.3)</p>
+<p>ax4 = axes[1, 1] nonzero_counts = [lasso_results[alpha][‘n_nonzero_coef’] for alpha in alphas] ax4.plot(alphas, nonzero_counts, ‘o-’, linewidth=2, markersize=8) ax4.axhline(y=n_informative, color=‘r’, linestyle=‘–’, label=f’True number ({n_informative})‘) ax4.set_xscale(’log’) ax4.set_xlabel(‘Alpha (log scale)’) ax4.set_ylabel(‘Number of Non-zero Coefficients’) ax4.set_title(‘Sparsity vs Regularization Strength’) ax4.legend() ax4.grid(True, alpha=0.3)</p>
+<p>plt.tight_layout() plt.show()</p>
+<p>from sklearn.linear_model import LassoCV</p>
+<p>alphas_cv = np.linspace(0.0001, 0.3, 50)</p>
+<p>lasso_cv = LassoCV(alphas=alphas_cv, cv=5, max_iter=10000) lasso_cv.fit(X_train_scaled, Y_train)</p>
+<p>optimal_alpha = lasso_cv.alpha_ print(f”Optimal alpha from cross-validation: {optimal_alpha:.4f}“)</p>
+<p>Y_test_pred_cv = lasso_cv.predict(X_test_scaled) test_mse_cv = mean_squared_error(Y_test, Y_test_pred_cv) test_r2_cv = r2_score(Y_test, Y_test_pred_cv)</p>
+<p>print(f”Test MSE with optimal alpha: {test_mse_cv:.4f}“) print(f”Test R² with optimal alpha: {test_r2_cv:.4f}“)</p>
+<p>plt.figure(figsize=(10, 6)) plt.errorbar(lasso_cv.alphas_, lasso_cv.mse_path_.mean(axis=1), yerr=lasso_cv.mse_path_.std(axis=1), label=‘Mean CV MSE ± 1 std’) plt.axvline(x=optimal_alpha, color=‘r’, linestyle=‘–’, label=f’Optimal α = {optimal_alpha:.4f}‘) plt.xscale(’log’) plt.xlabel(‘Alpha (log scale)’) plt.ylabel(‘Mean Squared Error’) plt.title(‘Cross-Validation Curve’) plt.legend() plt.grid(True, alpha=0.3) plt.show()</p>
+<p>summary_data = []</p>
+<p>for alpha in alphas: summary_data.append({ ‘Method’: ‘Lasso’, ‘Alpha’: alpha, ‘Test MSE’: lasso_results[alpha][‘test_mse’], ‘Test R²’: lasso_results[alpha][‘test_r2’], ‘Non-zero Coefficients’: lasso_results[alpha][‘n_nonzero_coef’] })</p>
+<p>for alpha in alphas: summary_data.append({ ‘Method’: ‘Ridge’, ‘Alpha’: alpha, ‘Test MSE’: ridge_results[alpha][‘test_mse’], ‘Test R²’: ridge_results[alpha][‘test_r2’], ‘Non-zero Coefficients’: n_features # Ridge doesn’t set coefficients to zero })</p>
+<p>summary_data.append({ ‘Method’: ‘Lasso (CV)’, ‘Alpha’: optimal_alpha, ‘Test MSE’: test_mse_cv, ‘Test R²’: test_r2_cv, ‘Non-zero Coefficients’: np.sum(lasso_cv.coef_ != 0) })</p>
+<p>summary_df = pd.DataFrame(summary_data) print(“Comparison Summary:”) print(summary_df)</p>
+</section>
+<section id="ecercise-1-effect-of-sample-size" class="level2">
+<h2 class="anchored" data-anchor-id="ecercise-1-effect-of-sample-size">Ecercise 1: Effect of Sample Size</h2>
+<section id="modify-the-code-to-investigate-how-the-sample-size-affects-lassos-ability-to-recover-the-true-coefficients.-try-n_samples-100-200-1000-and-plot-the-feature-selection-performance." class="level3">
+<h3 class="anchored" data-anchor-id="modify-the-code-to-investigate-how-the-sample-size-affects-lassos-ability-to-recover-the-true-coefficients.-try-n_samples-100-200-1000-and-plot-the-feature-selection-performance.">Modify the code to investigate how the sample size affects Lasso’s ability to recover the true coefficients. Try n_samples = [100, 200, 1000] and plot the feature selection performance.</h3>
+<p>n_samples_list = [100, 200, 1000]</p>
+</section>
+</section>
+<section id="container-for-results" class="level1">
+<h1>Container for results</h1>
+<p>lasso_results = []</p>
+</section>
+<section id="replying-code-but-using-bigger-for-loop" class="level1">
+<h1>Replying code but using bigger for loop</h1>
+<p>for n_samples in n_samples_list:</p>
+<pre><code>X = np.random.randn(n_samples, n_features)
+true_coefficients = np.zeros(n_features)
+informative_features = np.random.choice(n_features, n_informative, replace=False)
+for idx in informative_features:
+    true_coefficients[idx] = np.random.randn() * 3
+Y = X @ true_coefficients + np.random.randn(n_samples) * noise_level
+
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+for alpha in alphas:
+    lasso = Lasso(alpha=alpha, max_iter=10000)
+    lasso.fit(X_train_scaled, Y_train)
+    coef = lasso.coef_
+    n_nonzero = np.sum(coef != 0)
+
+    selected = set(np.where(coef != 0)[0])
+    true_set = set(informative_features)
+    tpr = len(selected &amp; true_set) / len(true_set) if len(true_set) &gt; 0 else 0
+    fpr = len(selected - true_set) / (n_features - len(true_set)) if (n_features - len(true_set)) &gt; 0 else 0
+
+    lasso_results.append({
+        'n_samples': n_samples,
+        'alpha': alpha,
+        'n_nonzero_coef': n_nonzero,
+        'TPR': tpr,
+        'FPR': fpr
+    })</code></pre>
+</section>
+<section id="convert-to-dataframe-and-print" class="level1">
+<h1>Convert to DataFrame and print</h1>
+<p>df = pd.DataFrame(lasso_results) print(“Feature Selection Summary:”) print(df)</p>
+</section>
+<section id="plot-number-of-non-zero-coefficients-vs-sample-size" class="level1">
+<h1>Plot: Number of non-zero coefficients vs sample size</h1>
+<p>plt.figure(figsize=(8,6)) for alpha in alphas: subset = df[df[‘alpha’] == alpha] plt.plot(subset[‘n_samples’], subset[‘n_nonzero_coef’], marker=‘o’, label=f’α = {alpha}‘) plt.axhline(y=n_informative, color=’r’, linestyle=‘–’, label=‘True informative’) plt.xlabel(‘Sample size’) plt.ylabel(‘Number of non-zero coefficients’) plt.title(‘Lasso: Non-zero coefficients vs Sample Size’) plt.legend() plt.grid(True, alpha=0.3) plt.show()</p>
+</section>
+<section id="plot-tpr-vs-sample-size" class="level1">
+<h1>Plot: TPR vs sample size</h1>
+<p>plt.figure(figsize=(8,6)) for alpha in alphas: subset = df[df[‘alpha’] == alpha] plt.plot(subset[‘n_samples’], subset[‘TPR’], marker=‘o’, label=f’α = {alpha}‘) plt.xlabel(’Sample size’) plt.ylabel(‘True Positive Rate (TPR)’) plt.title(‘Lasso: TPR vs Sample Size’) plt.legend() plt.grid(True, alpha=0.3) plt.show()</p>
+</section>
+<section id="plot-fpr-vs-sample-size" class="level1">
+<h1>Plot: FPR vs sample size</h1>
+<p>plt.figure(figsize=(8,6)) for alpha in alphas: subset = df[df[‘alpha’] == alpha] plt.plot(subset[‘n_samples’], subset[‘FPR’], marker=‘o’, label=f’α = {alpha}‘) plt.xlabel(’Sample size’) plt.ylabel(‘False Positive Rate (FPR)’) plt.title(‘Lasso: FPR vs Sample Size’) plt.legend() plt.grid(True, alpha=0.3) plt.show() ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv ##### TPR and FPR aboout real coefficients</p>
+<section id="exercise-2-different-sparsity-levels" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-2-different-sparsity-levels">Exercise 2: Different Sparsity Levels</h3>
+</section>
+<section id="change-the-number-of-informative-features-n_informative-to-see-how-sparsity-affects-performance.-try-values-like-5-20-50-and-100." class="level2">
+<h2 class="anchored" data-anchor-id="change-the-number-of-informative-features-n_informative-to-see-how-sparsity-affects-performance.-try-values-like-5-20-50-and-100.">Change the number of informative features (n_informative) to see how sparsity affects performance. Try values like 5, 20, 50, and 100.</h2>
+<section id="now-on-fixed-samples-and-features-and-different-sparsity-levels" class="level3">
+<h3 class="anchored" data-anchor-id="now-on-fixed-samples-and-features-and-different-sparsity-levels">Now on fixed samples and features and different sparsity levels</h3>
+<p>n_samples = 500 n_features = 100 n_informative_list = [5, 20, 50, 100]</p>
+</section>
+</section>
+</section>
+<section id="store-results" class="level1">
+<h1>Store results</h1>
+<p>results = []</p>
+<section id="for-loop-again" class="level2">
+<h2 class="anchored" data-anchor-id="for-loop-again">For loop again</h2>
+<p>for n_informative in n_informative_list: if n_informative &gt; n_features: print(f”Skipping n_informative={n_informative}: exceeds n_features={n_features}“) continue</p>
+<pre><code>X = np.random.randn(n_samples, n_features)
+true_coefficients = np.zeros(n_features)
+informative_features = np.random.choice(n_features, n_informative, replace=False)
+for idx in informative_features:
+    true_coefficients[idx] = np.random.randn() * 3
+y = X @ true_coefficients + np.random.randn(n_samples) * noise_level
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+for alpha in alphas:
+    lasso = Lasso(alpha=alpha, max_iter=10000)
+    lasso.fit(X_train_scaled, y_train)
+    
+    coef = lasso.coef_
+    n_nonzero = np.sum(coef != 0)
+    n_true_positive = np.sum((coef != 0) &amp; (true_coefficients != 0))
+    n_false_positive = np.sum((coef != 0) &amp; (true_coefficients == 0))
+    n_noise = n_features - n_informative
+    
+    tpr = n_true_positive / n_informative if n_informative &gt; 0 else 0
+    fpr = n_false_positive / n_noise if n_noise &gt; 0 else 0
+    
+    results.append({
+        'n_informative': n_informative,
+        'alpha': alpha,
+        'n_nonzero_coef': n_nonzero,
+        'TPR': tpr,
+        'FPR': fpr
+    })</code></pre>
+</section>
+</section>
+<section id="results-dataframe" class="level1">
+<h1>Results DataFrame</h1>
+<p>df_results = pd.DataFrame(results) print(df_results) ## vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv</p>
+<section id="exercise-3-correlated-features" class="level2">
+<h2 class="anchored" data-anchor-id="exercise-3-correlated-features">Exercise 3: Correlated Features</h2>
+</section>
+<section id="modify-the-data-generating-process-to-include-correlated-features.-how-does-this-affect-lassos-performance" class="level2">
+<h2 class="anchored" data-anchor-id="modify-the-data-generating-process-to-include-correlated-features.-how-does-this-affect-lassos-performance">Modify the data generating process to include correlated features. How does this affect Lasso’s performance?</h2>
+</section>
+</section>
+<section id="hint-for-exercise-3-creating-correlated-features-correlation_matrix-np.eyen_features.-add-some-correlations-between-features-and-use-numpy.random.multivariate_normal-to-generate-x." class="level1">
+<h1>Hint for Exercise 3: Creating correlated features correlation_matrix = np.eye(n_features). Add some correlations between features and use numpy.random.multivariate_normal to generate X.</h1>
+<p>n_samples = 500 n_features = 100 n_informative = 20</p>
+</section>
+<section id="create-correlation-matrix" class="level1">
+<h1>Create correlation matrix</h1>
+<p>correlation_matrix = np.eye(n_features) correlated_blocks = [(0, 10), (20, 30), (40, 50), (60, 70), (80, 90)] for start, end in correlated_blocks: for j in range(start, end): for k in range(start, end): if j != k: correlation_matrix[j, k] = np.random.uniform(0.4, 0.8)</p>
+</section>
+<section id="generating-data" class="level1">
+<h1>Generating data</h1>
+<p>mean = np.zeros(n_features) X = np.random.multivariate_normal(mean, correlation_matrix, size=n_samples)</p>
+<p>true_coefficients = np.zeros(n_features) informative_features = np.random.choice(n_features, n_informative, replace=False) for idx in informative_features: true_coefficients[idx] = np.random.randn() * 3 y = X @ true_coefficients + np.random.randn(n_samples) * noise_level</p>
+</section>
+<section id="split-and-scale" class="level1">
+<h1>Split and scale</h1>
+<p>X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42) scaler = StandardScaler() X_train_scaled = scaler.fit_transform(X_train) X_test_scaled = scaler.transform(X_test)</p>
+<p>results = []</p>
+<p>for alpha in alphas: lasso = Lasso(alpha=alpha, max_iter=10000) lasso.fit(X_train_scaled, y_train) coef = lasso.coef_</p>
+<pre><code>n_nonzero = np.sum(coef != 0)
+tp = np.sum((coef != 0) &amp; (true_coefficients != 0))
+fp = np.sum((coef != 0) &amp; (true_coefficients == 0))
+fn = np.sum((coef == 0) &amp; (true_coefficients != 0))
+tn = np.sum((coef == 0) &amp; (true_coefficients == 0))
+
+tpr = tp / (tp + fn) if (tp + fn) &gt; 0 else 0
+fpr = fp / (fp + tn) if (fp + tn) &gt; 0 else 0
+precision = tp / (tp + fp) if (tp + fp) &gt; 0 else 0
+
+results.append({
+    'Alpha': alpha,
+    'Non-zero Coef': n_nonzero,
+    'TPR': tpr,
+    'FPR': fpr,
+    'Precision': precision
+})</code></pre>
+</section>
+<section id="results-dataframe-1" class="level1">
+<h1>Results DataFrame</h1>
+<p>df_results = pd.DataFrame(results) print(“Selection Performance Summary:”) print(df_results)</p>
+<section id="report" class="level2">
+<h2 class="anchored" data-anchor-id="report">Report</h2>
+<ol type="1">
+<li>Why does Lasso perform feature selection while Ridge doesn’t?</li>
+</ol>
+<p>Due to the nature of lasso regulariaztion technique, feature selection imposing coefficients=0 is straightforward, angular functional form causes faster convergence to 0 compared to ridge, wich instead tends to shrink coefficients without setting the exactly to zero. Ridge regression tends to be easier and faster to optimize than Lasso, as its objective is smooth and differentiable everywhere, this makes it attractive for large-scale applications where stability and efficiency are priorities.</p>
+<ol start="2" type="1">
+<li>In what situations would you prefer Lasso over Ridge?</li>
+</ol>
+<p>With that said, in high dimensional framework where you need to apply feature selection, Lasso may be a better choice. In the last exercise we have also enlighted Lasso performance with spasity, allowing for automatic variables selection. The first is particularly preferred when the goal is to achieve a sparse and interpretable model, for example in economics models may include numerous indicators but only a few drive the target metric. Performing regularization and variables selection in a single step. Ridge could be preferrable whenever you need to reduce variance without losing information, with high correlation/multicollinearity in features and all predictors are believed to contribute to the outcome to some extent.</p>
+<ol start="3" type="1">
+<li>What are the limitations of Lasso for feature selection?</li>
+</ol>
+<p>Lasso may lead to bias, shrinking strongly predictive features and under-estimating effects, also Lasso solutions can be highly sensitive to small changes in the data or in the choice of the tuning parameter (alpha) as we have previous seen. In high correlation frameworks Lasso often picks just one, this culd result in unreliable models, it also can only pick n features (n=n_samples) limitating performance in high-dimensions, combining Lasso with Ridge via Elastic Net may yield more stable models.</p>
+<section id="about-what-i-learnt" class="level3">
+<h3 class="anchored" data-anchor-id="about-what-i-learnt">ABOUT WHAT I LEARNT</h3>
+<p>During this course I have learned that even topics I am familiar with in econometrics require a certain level of knowledge and mastery of the software to be effectively implemented in Python. In general, it opened my eyes to the world of computer science and made me realize that computational tools are more than essential in modern economics.</p>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
